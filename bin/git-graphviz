@@ -1,0 +1,130 @@
+#!/bin/bash
+
+#HELP:COMMAND_NAME: Build and display a git repository graph using GraphViz
+#HELP:Options:
+#HELP:  --help | -h: print this help
+#HELP:  --verbose | -v: print debugging and status output
+#HELP:  --keep-temps | -k: Don't delete temporary files
+
+set -o nounset -o errexit
+
+root_dir=$(dirname "$0")/..
+. "$root_dir"/share/wrtools-core/opt_help.bash
+. "$root_dir"/share/wrtools-core/opt_verbose.bash
+. "$root_dir"/share/wrtools-core/fail.bash
+. "$root_dir"/share/wrtools-core/temp.bash
+
+OPTIND=1
+while getopts :fhkvs:-: OPTION
+do
+    case "$OPTION" in
+        h ) opt_help;;
+        k ) opt_keep_temps;;
+        v ) opt_verbose;;
+        - )
+            case "$OPTARG" in
+                help ) opt_help;;
+                keep-temps ) opt_keep_temps;;
+                verbose ) opt_verbose;;
+                help=* | keep-temps=* | verbose=* ) 
+                    fail "No argument expected for long option \"${OPTARG%%=*}\"";;
+
+#                format=* ) opt_format "${OPTARG#*=}";;
+#                param=* ) opt_param "${OPTARG#*=}";;
+#                schema=* ) opt_schema "${OPTARG#*=}";;
+#                format | param | schema )
+#                    fail "Missing required argument for long option \"$OPTARG\"";;
+                
+                * ) fail "Unexpected long option \"$OPTARG\"";;
+            esac;;
+        '?' ) fail "Unknown short option \"$OPTARG\"";;
+        : ) fail "Short option \"$OPTARG\" missing argument";;
+        * ) fail "bad state OPTARG=\"$OPTARG\"";;
+    esac
+done
+shift $((OPTIND-1))
+
+# $@ is git args
+
+if (( $# == 0 ))
+then set -- --full-history --all
+     all=true
+else all=false
+fi
+
+temp_make_dir git_graphviz
+
+{
+    cat <<EOF
+digraph git_graph {
+    edge [dir=back];
+    node [shape=box, style=rounded];
+EOF
+
+    git log --pretty="format: REALQUOTE\`'%h\`'REALQUOTE [tooltip=REALQUOTE\`'%s\`'REALQUOTE URL=REALQUOTE\`'graph.html\`'REALQUOTE];" "$@" \
+      | sed -e "s/\"/HIDDENQUOTE/g" \
+      | m4 --define=REALQUOTE="\"" --define=HIDDENQUOTE="\\\""
+    
+    git log --pretty='format:  { %p } -> %h;' "$@" \
+      | sed "s/[0-9a-f][0-9a-f]*/\"&\"/g"
+
+    cat <<EOF
+    node [shape=plaintext];
+EOF
+
+    if [[ $all = true ]]
+    then
+      git for-each-ref --format="\"%(objectname:short)\" -> \"%(refname:short)\";" refs/heads refs/remotes
+      git for-each-ref --format="\"%(objectname:short)\" -> \"tag:%(refname:short)\";" refs/tags
+    else
+        git for-each-ref --format='%(objectname:short) %(refname:short)' > "$git_graphviz"/refs.txt
+        for commit in $(git log --format="format:%h" "$@")
+        do for tag in $(git tag -l --points-at $commit)
+           do printf "\"%s\" -> \"tag:%s\";\n" $commit $tag
+           done
+           egrep "^$commit" "$git_graphviz"/refs.txt \
+             | sed -e 's/^\([^ ]*\) \(.*$\)/"\1" -> "\2";/'
+        done
+    fi
+    
+    cat <<EOF
+}
+EOF
+} > "$git_graphviz"/graph.dot
+
+dot -Tsvg -o"$git_graphviz"/graph.svg -Tcmapx -o"$git_graphviz"/graph.map "$git_graphviz"/graph.dot
+base64 --wrap=0 "$git_graphviz"/graph.svg > "$git_graphviz"/graph.svg.base64
+
+{
+    cat <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <style type="text/css" media="all">
+html {
+  margin: 0;
+  padding: 0;
+}          
+    </style>
+    <title>Graphviz graph</title>
+  </head>
+  <body>
+    <img src="data:image/svg+xml;base64,$(cat "$git_graphviz"/graph.svg.base64)" usemap="#git_graph"/>
+EOF
+
+    cat "$git_graphviz"/graph.map
+
+    cat <<EOF
+  </body>
+</html>
+
+EOF
+} > "$git_graphviz"/graph.html
+
+open "$git_graphviz"/graph.html
+
+read -p 'Press ENTER when done.'
+
+
+
