@@ -22,19 +22,28 @@ opt_url_at_remote () {
     url_at_remote=$1
 }
 
+#HELP:  --all | -a: show all commits & refs in the repository
+unset all
+opt_all () {
+    (( $# == 0 ))|| fail "$FUNCNAME expects 1 arg, a remote name"
+    all=true
+}
+
 OPTIND=1
-while getopts :fhkvs:-: OPTION
+while getopts :afhkvs:-: OPTION
 do
     case "$OPTION" in
+        a ) opt_all;;
         h ) opt_help;;
         k ) opt_keep_temps;;
         v ) opt_verbose;;
         - )
             case "$OPTARG" in
+                all ) opt_all;;
                 help ) opt_help;;
                 keep-temps ) opt_keep_temps;;
                 verbose ) opt_verbose;;
-                help=* | keep-temps=* | verbose=* ) 
+                all=* | help=* | keep-temps=* | verbose=* ) 
                     fail "No argument expected for long option \"${OPTARG%%=*}\"";;
 
                 url-at-remote=* ) opt_url_at_remote "${OPTARG#*=}";;
@@ -52,15 +61,13 @@ shift $((OPTIND-1))
 
 # $@ is git args
 
-if (( $# == 0 ))
+if [[ -n ${all+is-set} ]]
 then set -- --full-history --all
-     all=true
-else all=false
 fi
 
 temp_make_dir git_graphviz
 
-url_format="graph.html"
+url_format="format:%H"
 if [[ -n ${url_at_remote+is-set} ]]
 then git remote show "$url_at_remote" > "$git_graphviz"/remote_show.txt || fail "Remote $url_at_remote not found"
      sed -e 's/^  Fetch URL: \(.*\)$/\1/p;d' < "$git_graphviz"/remote_show.txt > "$git_graphviz"/remote_url.txt
@@ -78,27 +85,48 @@ digraph git_graph {
     node [fontname = "Helvetica", fontsize = 10, width = 0, height = 0, shape=box, style=rounded];
 EOF
 
-    git log --pretty="format: REALQUOTE\`'%h\`'REALQUOTE [tooltip=REALQUOTE\`'%s\`'REALQUOTE URL=REALQUOTE\`'$url_format\`'REALQUOTE];" "$@" \
-      | sed -e "s/\"/HIDDENQUOTE/g" \
-      | m4 --define=REALQUOTE="\"" --define=HIDDENQUOTE="\\\""
-    
-    git log --pretty='format:  { %p } -> %h;' "$@" \
-      | sed "s/[0-9a-f][0-9a-f]*/\"&\"/g"
+    {
+        git log --pretty="format:%h %s" "$@"
+        printf '\n'
+    } > "$git_graphviz"/commits.txt
+
+    while read -d$'\n' short summary
+    do url=$(git log --pretty="$url_format" -n 1 "$short")
+       printf '"%s" [id="id_%s", tooltip="%s", URL="%s"];\n' "$short" "$short" "${summary//\"/\\\"}" "$url"
+    done < "$git_graphviz"/commits.txt
+
+    put_parents() {
+        from=$1
+        shift
+        while (( $# > 0 ))
+        do # exclude commits not in the list
+            if egrep -q "^$1" "$git_graphviz"/commits.txt 
+            then printf '"%s" -> "%s";\n' "$1" "$from"
+            fi
+            shift
+        done
+    }
+
+    while read -d$'\n' -a parents
+    do put_parents "${parents[@]}"
+    done < <(git log --pretty='%h %p' "$@")
 
     cat <<EOF
     node [shape=plaintext];
 EOF
 
-    if [[ $all = true ]]
+    if [[ -n ${all+is-set} ]]
     then
       git for-each-ref --format="\"%(objectname:short)\" -> \"%(refname:short)\";" refs/heads refs/remotes
       git for-each-ref --format="\"%(objectname:short)\" -> \"tag:%(refname:short)\";" refs/tags
     else
-        git for-each-ref --format='%(objectname:short) %(refname:short)' > "$git_graphviz"/refs.txt
+        git for-each-ref --format='%(objectname:short) %(refname:short)' refs/heads refs/remotes > "$git_graphviz"/refs.txt
         for commit in $(git log --format="format:%h" "$@")
-        do for tag in $(git tag -l --points-at $commit)
+        do # print the tags
+            for tag in $(git tag -l --points-at $commit)
            do printf "\"%s\" -> \"tag:%s\";\n" $commit $tag
-           done
+            done
+            # print heads & remotes
            egrep "^$commit" "$git_graphviz"/refs.txt \
              | sed -e 's/^\([^ ]*\) \(.*$\)/"\1" -> "\2";/'
         done
