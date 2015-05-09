@@ -1,0 +1,7 @@
+*~
+/config.log
+/config.status
+/stow.mk
+/Makefile
+/autom4te.cache
+/tmp

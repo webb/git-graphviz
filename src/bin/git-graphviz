@@ -1,6 +1,7 @@
 #!/bin/bash
 
 #HELP:COMMAND_NAME: Build and display a git repository graph using GraphViz
+#HELP:Usage: COMMAND_NAME [options]* -- rev-list ...
 #HELP:Options:
 #HELP:  --help | -h: print this help
 #HELP:  --verbose | -v: print debugging and status output
@@ -25,25 +26,34 @@ opt_url_at_remote () {
 #HELP:  --all | -a: show all commits & refs in the repository
 unset all
 opt_all () {
-    (( $# == 0 ))|| fail "$FUNCNAME expects 1 arg, a remote name"
+    (( $# == 0 ))|| fail "$FUNCNAME expects 0 args (got $#)"
     all=true
 }
 
+#HELP:  --open | -o: open the HTML result file
+unset open
+opt_open () {
+    (( $# == 0 ))|| fail "$FUNCNAME expects 0 args (got $#)"
+    open=true
+}
+
 OPTIND=1
-while getopts :afhkvs:-: OPTION
+while getopts :ahkov-: OPTION
 do
     case "$OPTION" in
         a ) opt_all;;
         h ) opt_help;;
         k ) opt_keep_temps;;
+        o ) opt_open;;
         v ) opt_verbose;;
         - )
             case "$OPTARG" in
                 all ) opt_all;;
                 help ) opt_help;;
                 keep-temps ) opt_keep_temps;;
+                open ) opt_open;;
                 verbose ) opt_verbose;;
-                all=* | help=* | keep-temps=* | verbose=* ) 
+                all=* | help=* | keep-temps=* | verbose=* | open=* ) 
                     fail "No argument expected for long option \"${OPTARG%%=*}\"";;
 
                 url-at-remote=* ) opt_url_at_remote "${OPTARG#*=}";;
@@ -167,9 +177,13 @@ EOF
 EOF
 } > "$git_graphviz"/graph.html
 
-open "$git_graphviz"/graph.html
-
-read -p 'Press ENTER when done.'
+if [[ -n ${open+is-set} ]]
+then
+  OPEN_BIN=$(type -p open) || fail "program \"open\" not found"
+  "$OPEN_BIN" "$git_graphviz"/graph.html
+  read -p 'Press ENTER when done.'
+else cat "$git_graphviz"/graph.html
+fi
 
 
 

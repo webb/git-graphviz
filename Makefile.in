@@ -1,0 +1,83 @@
+
+# Copyright 2014-2015 Georgia Tech Research Corporation (GTRC). All rights reserved.
+
+# This program is free software: you can redistribute it and/or modify it under
+# the terms of the GNU General Public License as published by the Free Software
+# Foundation, either version 3 of the License, or (at your option) any later
+# version.
+
+# This program is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+# FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more
+# details.
+
+# You should have received a copy of the GNU General Public License along with
+# this program.  If not, see <http://www.gnu.org/licenses/>.
+
+SHELL = @bash@ -o pipefail
+
+PACKAGE_NAME = @PACKAGE_NAME@
+PACKAGE_VERSION = @PACKAGE_VERSION@
+prefix = @prefix@
+
+# prerequisite packages
+wrtools_core_package_name=wrtools-core
+
+INSTALL = @INSTALL@
+MKDIR_P = @MKDIR_P@
+
+tar = @tar@
+touch = @touch@
+zip = @zip@
+
+src_files = $(shell find src -type f ! -name '*~')
+all_files = $(src_files:src/%=tmp/all/%)
+install_files = $(all_files:tmp/all/%=$(prefix)/%)
+
+tokens_dir = tmp/tokens
+built_all_token = $(tokens_dir)/built-all
+
+# dist
+dist_name = $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+
+.PHONY: all install uninstall clean distclean
+
+.PHONY: all # build the usual suspects
+all: $(built_all_token)
+
+$(built_all_token): $(all_files)
+	$(MKDIR_P) $(dir $@) && touch $@
+
+tmp/all/%: src/%
+	$(MKDIR_P) $(dir $@)
+	$(INSTALL) $< $@
+	if [[ -x $< ]]; then chmod uog+x $@; fi
+
+.PHONY: install # install what needs to be installed
+install: $(built_all_token)
+	$(MKDIR_P) $(prefix)
+	(cd tmp/all && $(tar) cf - .) | (cd $(prefix) && $(tar) xf -)
+
+.PHONY: uninstall # erase installed files
+uninstall: 
+	$(RM) $(install_files)
+
+.PHONY: clean # erase from the bild tree the files built by make all
+clean:
+	$(RM) -r tmp
+
+.PHONY: distclean # erase anything ./configure created
+distclean: clean
+	$(RM) -r autom4te.cache .gradle tmp
+	$(RM) Makefile config.log config.status stow.mk
+
+.PHONY: zip # build runnable distribution zip file
+zip: tmp/$(dist_name).zip
+
+tmp/$(dist_name).zip: all
+	$(RM) -r tmp/$(dist_name) tmp/$(dist_name).zip
+	$(MKDIR_P) tmp/$(dist_name)
+	$(MAKE) -f prerequisites.mk
+	(cd tmp/prerequisites && $(tar) cf - .) | (cd tmp/$(dist_name) && $(tar) xf -)
+	(cd tmp/all && $(tar) cf - .) | (cd tmp/$(dist_name) && $(tar) xf -)
+	cd tmp && $(zip) -9 -r $(dist_name).zip $(dist_name)
