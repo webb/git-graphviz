@@ -133,10 +133,10 @@ EOF
         git for-each-ref --format='%(objectname:short) %(refname:short)' refs/heads refs/remotes > "$git_graphviz"/refs.txt
         for commit in $(git log --format="format:%h" "$@")
         do # print the tags
-            for tag in $(git tag -l --points-at $commit)
+           for tag in $(git tag -l --points-at $commit)
            do printf "\"%s\" -> \"tag:%s\";\n" $commit $tag
-            done
-            # print heads & remotes
+           done
+           # print heads & remotes
            egrep "^$commit" "$git_graphviz"/refs.txt \
              | sed -e 's/^\([^ ]*\) \(.*$\)/"\1" -> "\2";/'
         done
@@ -181,7 +181,7 @@ if [[ -n ${open+is-set} ]]
 then
   OPEN_BIN=$(type -p open) || fail "program \"open\" not found"
   "$OPEN_BIN" "$git_graphviz"/graph.html
-  read -p 'Press ENTER when done.'
+  sleep 5
 else cat "$git_graphviz"/graph.html
 fi
 
