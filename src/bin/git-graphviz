@@ -91,7 +91,7 @@ fi
 {
     cat <<EOF
 digraph git_graph {
-    edge [fontname = "Helvetica", fontsize = 10, dir = back];
+    edge [fontname = "Helvetica", fontsize = 10];
     node [fontname = "Helvetica", fontsize = 10, width = 0, height = 0, shape=box, style=rounded];
 EOF
 
@@ -111,7 +111,7 @@ EOF
         while (( $# > 0 ))
         do # exclude commits not in the list
             if egrep -q "^$1" "$git_graphviz"/commits.txt 
-            then printf '"%s" -> "%s";\n' "$1" "$from"
+            then printf '"%s" -> "%s";\n' "$from" "$1" 
             fi
             shift
         done
@@ -127,18 +127,18 @@ EOF
 
     if [[ -n ${all+is-set} ]]
     then
-      git for-each-ref --format="\"%(objectname:short)\" -> \"%(refname:short)\";" refs/heads refs/remotes
-      git for-each-ref --format="\"%(objectname:short)\" -> \"tag:%(refname:short)\";" refs/tags
+      git for-each-ref --format="\"%(refname:short)\" -> \"%(objectname:short)\";" refs/heads refs/remotes
+      git for-each-ref --format="\"tag:%(refname:short)\" -> \"%(objectname:short)\";" refs/tags
     else
         git for-each-ref --format='%(objectname:short) %(refname:short)' refs/heads refs/remotes > "$git_graphviz"/refs.txt
         for commit in $(git log --format="format:%h" "$@")
         do # print the tags
            for tag in $(git tag -l --points-at $commit)
-           do printf "\"%s\" -> \"tag:%s\";\n" $commit $tag
+           do printf "\"tag:%s\" -> \"%s\";\n" $tag $commit
            done
            # print heads & remotes
            egrep "^$commit" "$git_graphviz"/refs.txt \
-             | sed -e 's/^\([^ ]*\) \(.*$\)/"\1" -> "\2";/'
+             | sed -e 's/^\([^ ]*\) \(.*$\)/"\2" -> "\1";/'
         done
     fi
     
@@ -181,7 +181,7 @@ if [[ -n ${open+is-set} ]]
 then
   OPEN_BIN=$(type -p open) || fail "program \"open\" not found"
   "$OPEN_BIN" "$git_graphviz"/graph.html
-  sleep 5
+  read -t 5 -p 'press RETURN to exit, or wait'
 else cat "$git_graphviz"/graph.html
 fi
 
