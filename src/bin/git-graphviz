@@ -96,7 +96,7 @@ digraph git_graph {
 EOF
 
     {
-        git log --pretty="format:%h %s" "$@"
+        git log --pretty="format:%h %s %cn %ci" "$@"
         printf '\n'
     } > "$git_graphviz"/commits.txt
 
