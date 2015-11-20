@@ -591,11 +591,8 @@ ac_unique_file=""
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
 stow
-base64
-dot
 m4
 touch
-zip
 tar
 find
 bash
@@ -2047,47 +2044,6 @@ fi
 
 
   test "x$tar" = "x" && as_fn_error $? "tar not found" "$LINENO" 5
-# Extract the first word of "zip", so it can be a program name with args.
-set dummy zip; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_zip+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $zip in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_zip="$zip" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_zip="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-zip=$ac_cv_path_zip
-if test -n "$zip"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $zip" >&5
-$as_echo "$zip" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test "x$zip" = "x" && as_fn_error $? "zip not found" "$LINENO" 5
 # Extract the first word of "touch", so it can be a program name with args.
 set dummy touch; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
@@ -2175,88 +2131,6 @@ fi
 done
 
   test "x$m4" = "x" && as_fn_error $? "m4 not found" "$LINENO" 5
-# Extract the first word of "dot", so it can be a program name with args.
-set dummy dot; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_dot+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $dot in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_dot="$dot" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_dot="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-dot=$ac_cv_path_dot
-if test -n "$dot"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $dot" >&5
-$as_echo "$dot" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test "x$dot" = "x" && as_fn_error $? "dot not found" "$LINENO" 5
-# Extract the first word of "base64", so it can be a program name with args.
-set dummy base64; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_base64+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $base64 in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_base64="$base64" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_base64="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-base64=$ac_cv_path_base64
-if test -n "$base64"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $base64" >&5
-$as_echo "$base64" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test "x$base64" = "x" && as_fn_error $? "base64 not found" "$LINENO" 5
 
 for ac_prog in stow
 do
@@ -2316,6 +2190,8 @@ test -n "$stow" || stow="stow"
 ac_config_files="$ac_config_files Makefile"
 
 ac_config_files="$ac_config_files stow.mk"
+
+ac_config_files="$ac_config_files zip.mk"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -3026,6 +2902,7 @@ do
   case $ac_config_target in
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "stow.mk") CONFIG_FILES="$CONFIG_FILES stow.mk" ;;
+    "zip.mk") CONFIG_FILES="$CONFIG_FILES zip.mk" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -3454,6 +3331,7 @@ which seems to be undefined.  Please make sure it is defined" >&2;}
   case $ac_file$ac_mode in
     "Makefile":F) chmod 444 Makefile ;;
     "stow.mk":F) chmod 444 stow.mk ;;
+    "zip.mk":F) chmod 444 stow.mk ;;
 
   esac
 done # for ac_tag

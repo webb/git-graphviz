@@ -26,11 +26,11 @@ wrtools_core_package_name=wrtools-core
 INSTALL = @INSTALL@
 MKDIR_P = @MKDIR_P@
 
+find = @find@
 tar = @tar@
 touch = @touch@
-zip = @zip@
 
-src_files = $(shell find src -type f ! -name '*~')
+src_files = $(shell $(find) src -type f ! -name '*~')
 all_files = $(src_files:src/%=tmp/all/%)
 install_files = $(all_files:tmp/all/%=$(prefix)/%)
 
@@ -71,13 +71,3 @@ distclean: clean
 	$(RM) -r autom4te.cache .gradle tmp
 	$(RM) Makefile config.log config.status stow.mk
 
-.PHONY: zip # build runnable distribution zip file
-zip: tmp/$(dist_name).zip
-
-tmp/$(dist_name).zip: all
-	$(RM) -r tmp/$(dist_name) tmp/$(dist_name).zip
-	$(MKDIR_P) tmp/$(dist_name)
-	$(MAKE) -f prerequisites.mk
-	(cd tmp/prerequisites && $(tar) cf - .) | (cd tmp/$(dist_name) && $(tar) xf -)
-	(cd tmp/all && $(tar) cf - .) | (cd tmp/$(dist_name) && $(tar) xf -)
-	cd tmp && $(zip) -9 -r $(dist_name).zip $(dist_name)

@@ -1,14 +1,10 @@
-language: c
-install:
-- sudo apt-get install graphviz
-script: ./configure --prefix="$PWD/root" && make
-after_success: if [[ -n ${TRAVIS_TAG} ]]; then make zip dist_name=${TRAVIS_TAG}; fi
+language: java
+script: "./configure && make -f zip.mk zip release=${TRAVIS_TAG}"
 deploy:
   provider: releases
   api_key:
-    secure: NYwuSqqRF8zr9gCgG18/El30RUZC3noTEb23mEicqpFZZw8zqWDQ+QpzyfwH6xWzFR7a8hIhpnSVqz8AIL5jLJPHigjTudEQsT3rugZFEJlsJ13jJIYGZMbMgBD02rfy67gBXMPjrf2mZGDdpwrhZtzpOJy7MLL8+a7eVXELSgI=
-  file: tmp/${TRAVIS_TAG}.zip
+    secure: sjX0b2k0r5Noc1qRRruhvVPsmA/SfRZnxea7fuq6SF9VbREOohEW3JW3Ajk8Pm2eL4R3Fa42m1JeFng+6IKc1EC20eWtwo8ICPhOpOiP7rFBuHwFcE7F5TB4DGTPJqb4k7PUAfCZJORnI23w28t8EGw29aOkEHHzP2v/XxwDZ+o=
+  file: tmp/zip/${TRAVIS_TAG}.zip
   on:
     repo: webb/git-graphviz
     all_branches: true
-    tags: true

@@ -1,7 +1,8 @@
 *~
+/Makefile
+/autom4te.cache
 /config.log
 /config.status
 /stow.mk
-/Makefile
-/autom4te.cache
 /tmp
+/zip.mk

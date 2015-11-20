@@ -24,11 +24,8 @@ AC_DEFUN([WR_check_prog_options],[AC_PATH_PROGS($1,$2)
 WR_check_prog(bash)
 WR_check_prog(find)
 WR_check_prog(tar)
-WR_check_prog(zip)
 WR_check_prog(touch)
 WR_check_prog_options(m4,gm4 m4)
-WR_check_prog(dot)
-WR_check_prog(base64)
 
 AC_PATH_PROGS(stow,stow,stow)
 
@@ -42,4 +39,5 @@ AC_PATH_PROGS(stow,stow,stow)
 
 AC_CONFIG_FILES([Makefile], [chmod 444 Makefile])
 AC_CONFIG_FILES([stow.mk], [chmod 444 stow.mk])
+AC_CONFIG_FILES([zip.mk], [chmod 444 stow.mk])
 AC_OUTPUT
