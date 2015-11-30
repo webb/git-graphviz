@@ -18,7 +18,7 @@ root_dir=$(dirname "$0")/..
 #HELP:  --url-at-remote=$remote-name: point commits to URLs based on a remote repo
 unset url_at_remote
 opt_url_at_remote () {
-    (( $# == 1 ))|| fail "$FUNCNAME expects 1 arg, a remote name"
+    (( $# == 1 ))|| fail_assert "$FUNCNAME expects 1 arg, a remote name"
     [[ -z ${url_at_remote+is-set} ]] || fail "$Option --url-at-remote can only be used once"
     url_at_remote=$1
 }
@@ -26,15 +26,26 @@ opt_url_at_remote () {
 #HELP:  --all | -a: show all commits & refs in the repository
 unset all
 opt_all () {
-    (( $# == 0 ))|| fail "$FUNCNAME expects 0 args (got $#)"
+    (( $# == 0 ))|| fail_assert "$FUNCNAME expects 0 args (got $#)"
     all=true
 }
 
 #HELP:  --open | -o: open the HTML result file
 unset open
 opt_open () {
-    (( $# == 0 ))|| fail "$FUNCNAME expects 0 args (got $#)"
+    (( $# == 0 ))|| fail_assert "$FUNCNAME expects 0 args (got $#)"
     open=true
+}
+
+#HELP:  --date=$date-flag: set date format using git log --date option
+#HELP:      values: relative, local, default, iso, iso-strict, rfc, short, raw
+unset date
+opt_date () {
+    (( $# == 1 )) || fail_assert "$FUNCNAME expects 1 args (got $#)"
+    case $1 in
+        relative | local | default | iso | iso-strict | rfc | short | raw ) date=$1;;
+        * ) fail "Unknown value for --date ($1)";;
+    esac
 }
 
 OPTIND=1
@@ -56,8 +67,9 @@ do
                 all=* | help=* | keep-temps=* | verbose=* | open=* ) 
                     fail "No argument expected for long option \"${OPTARG%%=*}\"";;
 
+                date=* ) opt_date "${OPTARG#*=}";;
                 url-at-remote=* ) opt_url_at_remote "${OPTARG#*=}";;
-                url-at-remote )
+                url-at-remote | date )
                     fail "Missing required argument for long option \"$OPTARG\"";;
                 
                 * ) fail "Unexpected long option \"$OPTARG\"";;
@@ -73,6 +85,11 @@ shift $((OPTIND-1))
 
 if [[ -n ${all+is-set} ]]
 then set -- --full-history --all
+fi
+
+git_log=(git log)
+if [[ is-set = ${date+is-set} ]]
+then git_log+=( --date="$date" )
 fi
 
 temp_make_dir git_graphviz
@@ -96,13 +113,14 @@ digraph git_graph {
 EOF
 
     {
-        git log --pretty="format:%h %s %cn %ci" "$@"
+        "${git_log[@]}" --pretty="format:%h %cN <%cE> %cd %s" "$@"
         printf '\n'
     } > "$git_graphviz"/commits.txt
 
     while read -d$'\n' short summary
-    do url=$(git log --pretty="$url_format" -n 1 "$short")
-       printf '"%s" [id="id_%s", tooltip="%s", URL="%s"];\n' "$short" "$short" "${summary//\"/\\\"}" "$url"
+    do summary1=${summary//\"/\\\"}
+       url=$("${git_log[@]}" --pretty="$url_format" -n 1 "$short")
+       printf '"%s" [id="id_%s", tooltip="%s", URL="%s"];\n' "$short" "$short" "$summary1" "$url"
     done < "$git_graphviz"/commits.txt
 
     put_parents() {
@@ -119,7 +137,7 @@ EOF
 
     while read -d$'\n' -a parents
     do put_parents "${parents[@]}"
-    done < <(git log --pretty='%h %p' "$@")
+    done < <("${git_log[@]}" --pretty='%h %p' "$@")
 
     cat <<EOF
     node [shape=plaintext];
@@ -131,7 +149,7 @@ EOF
       git for-each-ref --format="\"tag:%(refname:short)\" -> \"%(objectname:short)\";" refs/tags
     else
         git for-each-ref --format='%(objectname:short) %(refname:short)' refs/heads refs/remotes > "$git_graphviz"/refs.txt
-        for commit in $(git log --format="format:%h" "$@")
+        for commit in $("${git_log[@]}" --format="format:%h" "$@")
         do # print the tags
            for tag in $(git tag -l --points-at $commit)
            do printf "\"tag:%s\" -> \"%s\";\n" $tag $commit
