@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #HELP:COMMAND_NAME: Build and display a git repository graph using GraphViz
 #HELP:Usage: COMMAND_NAME [options]* -- rev-list ...
@@ -15,7 +15,8 @@ root_dir=$(dirname "$0")/..
 . "$root_dir"/share/wrtools-core/fail.bash
 . "$root_dir"/share/wrtools-core/temp.bash
 
-#HELP:  --url-at-remote=$remote-name: point commits to URLs based on a remote repo
+#HELP:  --url-at-remote=$remote-name | -u $remote-name: point commits to URLs based on
+#HELP:                                                  a remote repo
 unset url_at_remote
 opt_url_at_remote () {
     (( $# == 1 ))|| fail_assert "$FUNCNAME expects 1 arg, a remote name"
@@ -49,13 +50,14 @@ opt_date () {
 }
 
 OPTIND=1
-while getopts :ahkov-: OPTION
+while getopts :ahkou:v-: OPTION
 do
     case "$OPTION" in
         a ) opt_all;;
         h ) opt_help;;
         k ) opt_keep_temps;;
         o ) opt_open;;
+        u ) opt_url_at_remote "$OPTARG";;
         v ) opt_verbose;;
         - )
             case "$OPTARG" in
@@ -202,6 +204,3 @@ then
   read -t 5 -p 'press RETURN to exit, or wait'
 else cat "$git_graphviz"/graph.html
 fi
-
-
-
