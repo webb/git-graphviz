@@ -201,6 +201,6 @@ if [[ -n ${open+is-set} ]]
 then
   OPEN_BIN=$(type -p open) || fail "program \"open\" not found"
   "$OPEN_BIN" "$git_graphviz"/graph.html
-  read -t 5 -p 'press RETURN to exit, or wait'
+  read -t 3 -p 'press RETURN to exit, or wait'
 else cat "$git_graphviz"/graph.html
 fi
