@@ -115,7 +115,7 @@ digraph git_graph {
 EOF
 
     {
-        "${git_log[@]}" --pretty="format:%h %cN <%cE> %cd %s" "$@"
+        "${git_log[@]}" --date="format:%I:%M%p %D" --pretty="format:%h %aN <%aE> %ad %s" "$@"
         printf '\n'
     } > "$git_graphviz"/commits.txt
 
